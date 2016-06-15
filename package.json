@@ -1,0 +1,25 @@
+{
+  "name": "http-service-stub",
+  "version": "1.0.0",
+  "description": "Stub GET requests for HTTP endpoints",
+  "author": "Anthony Green",
+  "license": "MIT",
+  "main": "app.js",
+  "scripts": {
+    "pretest": "npm install",
+    "test": "mocha",
+    "start": "node app.js"
+  },
+  "engines": {
+    "node": "0.12.7"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "mocha": "^2.5.3",
+    "supertest": "^1.2.0"
+  }
+}
