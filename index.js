@@ -1,5 +1,7 @@
 const http  = require('http');
 
+const PORT = (process.env.PORT || 8080);
+
 const server = http.createServer(handleRequest);
 
 var excludedURLS = ['/', '/log', '/favicon.ico'];
@@ -118,4 +120,6 @@ function handleRequest(request, response) {
 
 }
 
-module.exports = server;
+server.listen(PORT, function(){
+  console.log("Listening on port: " + PORT)
+});

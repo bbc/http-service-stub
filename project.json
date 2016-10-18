@@ -1,0 +1,6 @@
+{
+  "name" : "http-service-stub",
+  "packaging" : {
+    "type" : "spec"
+  }
+}

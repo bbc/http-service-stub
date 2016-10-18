@@ -1,0 +1,472 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "A BBC Component template. Includes autoscaled instances",
+    "Parameters": {
+        "BastionAccessSecurityGroup": {
+            "Description": "The security group that allows access from the bastions",
+            "Type": "String"
+        },
+        "CnameEntry": {
+            "Description": "The cname entry for the component",
+            "Type": "String"
+        },
+        "DomainNameBase": {
+            "Default": "cloud.bbc.co.uk.",
+            "Description": "Base domain name (ending with a '.') under which new DNS entries are added",
+            "Type": "String"
+        },
+        "Environment": {
+            "Description": "The name of the environment. Test or Live",
+            "Type": "String"
+        },
+        "ImageId": {
+            "Description": "The AMI to use for this component",
+            "Type": "String"
+        },
+        "InstanceType": {
+            "Default": "m1.small",
+            "Description": "The size of the instances",
+            "Type": "String"
+        },
+        "KeyName": {
+            "Description": "Name of existing EC2 keypair to enable SSH access to the created instances",
+            "Type": "String"
+        },
+        "MaxSize": {
+            "Default": "2",
+            "Description": "The maximum number of instances",
+            "Type": "String"
+        },
+        "MinSize": {
+            "Default": "2",
+            "Description": "The minimum number of instances",
+            "Type": "String"
+        },
+        "PrivateSubnet1Id": {
+            "Description": "The id of private subnet 1",
+            "Type": "String"
+        },
+        "PrivateSubnet2Id": {
+            "Description": "The id of private subnet 2",
+            "Type": "String"
+        },
+        "PrivateSubnet3Id": {
+            "Description": "The id of private subnet 3",
+            "Type": "String"
+        },
+        "PublicSubnet1Id": {
+            "Description": "The id of public subnet 1",
+            "Type": "String"
+        },
+        "PublicSubnet2Id": {
+            "Description": "The id of public subnet 2",
+            "Type": "String"
+        },
+        "PublicSubnet3Id": {
+            "Description": "The id of public subnet 3",
+            "Type": "String"
+        },
+        "S3BucketArn": {
+            "Description": "The location of the default private storage bucket for all applications.",
+            "Type": "String"
+        },
+        "UpdateMaxBatchSize": {
+            "Default": "1",
+            "Description": "The maximum number of instances to be killed at one time during an ASG update.",
+            "Type": "String"
+        },
+        "UpdateMinInService": {
+            "Default": "0",
+            "Description": "The minimum number of instances in service during an ASG update.",
+            "Type": "String"
+        },
+        "UpdatePauseTime": {
+            "Default": "PT0S",
+            "Description": "The time to wait between new instances coming online and the next batch being killed during an ASG update.",
+            "Type": "String"
+        },
+        "VpcId": {
+            "Description": "The Id of the VPC to attach the environment to",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "ComponentAutoScalingGroup": {
+            "Properties": {
+                "AvailabilityZones": [
+                    "eu-west-1a",
+                    "eu-west-1b",
+                    "eu-west-1c"
+                ],
+                "LaunchConfigurationName": {
+                    "Ref": "ComponentLaunchConfiguration"
+                },
+                "LoadBalancerNames": [
+                    {
+                        "Ref": "ComponentElasticLoadBalancer"
+                    }
+                ],
+                "MaxSize": {
+                    "Ref": "MaxSize"
+                },
+                "MinSize": {
+                    "Ref": "MinSize"
+                },
+                "Tags": [
+                    {
+                        "Key": "BBCProject",
+                        "PropagateAtLaunch": true,
+                        "Value": "media-playout"
+                    },
+                    {
+                        "Key": "BBCEnvironment",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "Environment"
+                        }
+                    },
+                    {
+                        "Key": "Name",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Environment"
+                                    },
+                                    "thumbnail-discovery"
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "BBCComponent",
+                        "PropagateAtLaunch": true,
+                        "Value": "thumbnail-discovery"
+                    }
+                ],
+                "VPCZoneIdentifier": [
+                    {
+                        "Ref": "PrivateSubnet1Id"
+                    },
+                    {
+                        "Ref": "PrivateSubnet2Id"
+                    },
+                    {
+                        "Ref": "PrivateSubnet3Id"
+                    }
+                ]
+            },
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MaxBatchSize": {
+                        "Ref": "UpdateMaxBatchSize"
+                    },
+                    "MinInstancesInService": {
+                        "Ref": "UpdateMinInService"
+                    },
+                    "PauseTime": {
+                        "Ref": "UpdatePauseTime"
+                    }
+                }
+            }
+        },
+        "ComponentDNS": {
+            "Properties": {
+                "HostedZoneName": {
+                    "Ref": "DomainNameBase"
+                },
+                "Name": {
+                    "Fn::Join": [
+                        ".",
+                        [
+                            {
+                                "Ref": "CnameEntry"
+                            },
+                            {
+                                "Ref": "DomainNameBase"
+                            }
+                        ]
+                    ]
+                },
+                "ResourceRecords": [
+                    {
+                        "Fn::GetAtt": [
+                            "ComponentElasticLoadBalancer",
+                            "DNSName"
+                        ]
+                    }
+                ],
+                "TTL": "60",
+                "Type": "CNAME"
+            },
+            "Type": "AWS::Route53::RecordSet"
+        },
+        "ComponentElasticLoadBalancer": {
+            "Properties": {
+                "CrossZone": false,
+                "HealthCheck": {
+                    "HealthyThreshold": "3",
+                    "Interval": "15",
+                    "Target": "HTTP:7080/status",
+                    "Timeout": "10",
+                    "UnhealthyThreshold": "3"
+                },
+                "Listeners": [
+                    {
+                        "InstancePort": "7080",
+                        "InstanceProtocol": "tcp",
+                        "LoadBalancerPort": "80",
+                        "Protocol": "tcp"
+                    },
+                    {
+                        "InstancePort": "7443",
+                        "InstanceProtocol": "tcp",
+                        "LoadBalancerPort": "443",
+                        "Protocol": "tcp"
+                    }
+                ],
+                "SecurityGroups": [
+                    {
+                        "Ref": "LoadBalancerSecurityGroup"
+                    }
+                ],
+                "Subnets": [
+                    {
+                        "Ref": "PublicSubnet1Id"
+                    },
+                    {
+                        "Ref": "PublicSubnet2Id"
+                    },
+                    {
+                        "Ref": "PublicSubnet3Id"
+                    }
+                ]
+            },
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+        },
+        "ComponentInstanceProfile": {
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "ComponentRole"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::InstanceProfile"
+        },
+        "ComponentLaunchConfiguration": {
+            "Properties": {
+                "EbsOptimized": false,
+                "IamInstanceProfile": {
+                    "Ref": "ComponentInstanceProfile"
+                },
+                "ImageId": {
+                    "Ref": "ImageId"
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "BastionAccessSecurityGroup"
+                    },
+                    {
+                        "Ref": "ComponentSecurityGroup"
+                    }
+                ]
+            },
+            "Type": "AWS::AutoScaling::LaunchConfiguration"
+        },
+        "ComponentPolicy": {
+            "Properties": {
+                "PolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                "*"
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "cloudwatch:*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                "*"
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "s3:GetBucketLocation",
+                                "s3:GetBucketNotification",
+                                "s3:GetObject",
+                                "s3:ListBucket",
+                                "s3:ListBucketMultipartUploads",
+                                "s3:ListMultipartUploadParts"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                {
+                                    "Ref": "S3BucketArn"
+                                }
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "s3:GetObject",
+                                "s3:GetBucketLocation",
+                                "s3:AbortMultipartUpload",
+                                "s3:PutBucketNotification",
+                                "s3:PutObject",
+                                "s3:DeleteObject"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            {
+                                                "Ref": "S3BucketArn"
+                                            },
+                                            "/thumbnail-discovery/",
+                                            {
+                                                "Ref": "Environment"
+                                            },
+                                            "/logs/*"
+                                        ]
+                                    ]
+                                }
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "cloudformation:Describe*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                "*"
+                            ]
+                        },
+                        {
+                            "Action": [
+                                "ec2:Describe*"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                "*"
+                            ]
+                        }
+                    ]
+                },
+                "PolicyName": "ComponentPolicy",
+                "Roles": [
+                    {
+                        "Ref": "ComponentRole"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::Policy"
+        },
+        "ComponentRole": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Path": "/"
+            },
+            "Type": "AWS::IAM::Role"
+        },
+        "ComponentScalingPolicy": {
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "ComponentAutoScalingGroup"
+                },
+                "ScalingAdjustment": 1
+            },
+            "Type": "AWS::AutoScaling::ScalingPolicy"
+        },
+        "ComponentSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "A component security group allowing access only from the corresponding ELB",
+                "SecurityGroupIngress": [
+                    {
+                        "FromPort": "7080",
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupId": {
+                            "Ref": "LoadBalancerSecurityGroup"
+                        },
+                        "ToPort": "7080"
+                    },
+                    {
+                        "FromPort": "7443",
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupId": {
+                            "Ref": "LoadBalancerSecurityGroup"
+                        },
+                        "ToPort": "7443"
+                    },
+                    {
+                        "FromPort": "123",
+                        "IpProtocol": "udp",
+                        "SourceSecurityGroupId": {
+                            "Ref": "LoadBalancerSecurityGroup"
+                        },
+                        "ToPort": "123"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "VpcId"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "LoadBalancerSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "An ELB group allowing access only to from the corresponding component",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "VpcId"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        }
+    }
+}
