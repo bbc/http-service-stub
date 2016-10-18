@@ -1,6 +1,6 @@
 {
   "name": "http-service-stub",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Stub GET requests for HTTP endpoints",
   "author": "Anthony Green",
   "license": "MIT",

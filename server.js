@@ -27,16 +27,20 @@ function handleRequest(request, response) {
   switch(request.method) {
 
     case "GET":
-      retrieveStubFor(path)
-      .then(function(res) {
-        response.writeHead(res.status, res.headers || {});
-        if (res.body) { response.write(res.body, 'utf-8') };
-        response.end();   
-      })
-      .catch(function(err) {
-        response.writeHead(404, { });
-        response.end();    
-      })
+      if (request.url == "/status" || request.url == "/status/") {
+        response.writeHead(200);
+        response.end();
+      } else
+        retrieveStubFor(path)
+        .then(function(res) {
+          response.writeHead(res.status, res.headers || {});
+          if (res.body) { response.write(res.body, 'utf-8') };
+          response.end();   
+        })
+        .catch(function(err) {
+          response.writeHead(404, { });
+          response.end();    
+        })
       break;
     case "PUT":
       extractBodyFrom(request)
