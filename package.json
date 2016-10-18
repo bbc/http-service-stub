@@ -1,6 +1,6 @@
 {
   "name": "http-service-stub",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Stub GET requests for HTTP endpoints",
   "author": "Anthony Green",
   "license": "MIT",
@@ -26,9 +26,9 @@
   },
   "spec": {
     "post": [
-      "mv /usr/lib/thumbnail-discovery/bake-scripts /etc/bake-scripts/thumbnail-discovery",
-      "mv /usr/lib/thumbnail-discovery/httpd-conf/http_vhost.conf /etc/httpd/conf.d/http_vhost.conf",
-      "mv /usr/lib/thumbnail-discovery/httpd-conf/cloud_ssl_no_certs.conf /etc/httpd/conf.d/cloud_ssl_no_certs.conf"
+      "mv /usr/lib/http-service-stub/bake-scripts /etc/bake-scripts/http-service-stub",
+      "mv /usr/lib/http-service-stub/httpd-conf/http_vhost.conf /etc/httpd/conf.d/http_vhost.conf",
+      "mv /usr/lib/http-service-stub/httpd-conf/cloud_ssl_no_certs.conf /etc/httpd/conf.d/cloud_ssl_no_certs.conf"
     ],
     "executable": [
       "./bake-scripts"
