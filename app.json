@@ -1,0 +1,8 @@
+{
+  "name": "http-service-stub",
+  "description": "Node service for stubbing responses to GET requests",
+  "repository": "https://github.com/bbc/http-service-stub",
+  "keywords": ["bbc", "http", "stub", "server", "test", "testing"],
+  "env": {
+  }
+}
