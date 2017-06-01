@@ -17,7 +17,7 @@ describe('requests for unstubbed responses', function() {
 
 describe('creating', function() {
 
-  describe('stubs with a body', function() {
+  describe('stubs with a string body', function() {
 
     it('receives a 201 Created', function(done) {
       request.put('/example')
@@ -29,16 +29,41 @@ describe('creating', function() {
     it('creates the stub', function(done) {
       request.get('/example')
         .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200, { "foo": "1" }, done);
-    })
+        .expect(200, { "foo": "1" })
+        .expect('Content-Type', /json/, done)
+    });
 
     it('persists', function(done) {
       request.get('/example')
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200, { "foo": "1" }, done);
-    })
+    });
+
+  });
+
+  describe('stubs with a json body', function() {
+
+    it('receives a 201 Created', function(done) {
+      request.put('/example')
+        .set('Accept', 'application/json')
+        .send([200, { "Content-Type": "application/json" }, { "foo": 1 }])
+        .expect(201, done);
+    });
+
+    it('creates the stub', function(done) {
+      request.get('/example')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200, { "foo": "1" }, done);
+    });
+
+    it('persists', function(done) {
+      request.get('/example')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200, { "foo": "1" }, done);
+    });
 
   });
 
@@ -55,7 +80,7 @@ describe('creating', function() {
       request.get('/example')
         .set('Accept', 'application/json')
         .expect(500, done);
-    })
+    });
 
   });
 
@@ -161,4 +186,4 @@ describe('deleting', function() {
 
   });
 
-})
+});
