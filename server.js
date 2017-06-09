@@ -17,6 +17,11 @@ function handleRequest(request, response) {
     case "GET":
 
       switch(true) {
+        case /^\/?$/.test(request.url):
+          response.writeHead(200, { 'Content-Type': 'application/json' });
+          response.write("{}");
+          response.end();
+          break;
         case /^\/status\/?$/.test(request.url):
           response.writeHead(200);
           response.end();

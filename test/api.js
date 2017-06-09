@@ -5,6 +5,17 @@ const server = require('../server.js')
 server.listen(PORT, function(){});
 request = supertest(server);
 
+describe('/', function() {
+
+  it('defaults to 200', function(done) {
+    request.get('/')
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(200, {}, done);
+  });
+
+});
+
 describe('requests for unstubbed responses', function() {
 
   it('receive a 404 Unavailable', function(done) {
