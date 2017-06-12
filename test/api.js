@@ -105,42 +105,63 @@ describe('creating', function() {
 
   }); 
 
-  describe('adds successive stubs', function() {
-    
-    it('receives a 201 Created for the first stub', function(done) {
+  describe('adding successive stubs', function() {
+
+    beforeEach(function(done) {
+      request.delete('/')
+      .expect(200, done)
+    });
+
+    it('has a policy of last in first out with the oldest one cached', function(done) {
+
       request.put('/example')
         .set('Accept', 'application/json')
-        .send([200, { "Content-Type": "application/json" }, "{ \"bar\": 2 }"])
-        .expect(201, done);
-    });
+        .send([200, { "Content-Type": "application/json" }, "{ \"foo\": 1 }"])
+        .expect(201).end(function() {
 
-    it('creates a second stub', function(done) {
-      request.put('/example')
-        .set('Accept', 'application/json')
-        .send([200, { "Content-Type": "application/json" }, "{ \"baz\": 3 }"])
-        .expect(201, done);
-    });
+            request.put('/example')
+            .set('Accept', 'application/json')
+            .send([200, { "Content-Type": "application/json" }, "{ \"bar\": 2 }"])
+            .expect(201).end(function() {
 
-    it('has a policy of last in first out', function(done) {
-      request.get('/example')
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200, { "baz": "3" }, done);
-    });
+              request.put('/example')
+              .set('Accept', 'application/json')
+              .send([200, { "Content-Type": "application/json" }, "{ \"baz\": 3 }"])
+              .expect(201).end(function() {
 
-    it('retrieves the least recent stub last', function(done) {
-      request.get('/example')
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200, { "bar": "2" }, done);
-    });
+                  request.get('/example')
+                  .set('Accept', 'application/json')
+                  .expect('Content-Type', /json/)
+                  .expect(200, { "baz": 3 }).end(function() {
 
-    it('retrieves the last stub repeastedly', function(done) {
-      request.get('/example')
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200, { "bar": "2" }, done);
-    });
+                    request.get('/example')
+                    .set('Accept', 'application/json')
+                    .expect('Content-Type', /json/)
+                    .expect(200, { "bar": 2 }).end(function() {
+
+                      request.get('/example')
+                      .set('Accept', 'application/json')
+                      .expect('Content-Type', /json/)
+                      .expect(200, { "foo": 1 }).then(function() {
+
+                        request.get('/example')
+                        .set('Accept', 'application/json')
+                        .expect('Content-Type', /json/)
+                        .expect(200, { "foo": 1 }, done)
+
+                      })
+
+                    });
+
+                  });
+
+                });
+
+            });
+
+        });
+
+    })
 
   });
 
