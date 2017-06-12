@@ -23,11 +23,11 @@ describe('Catalogue', function() {
 
   });
 
-  it('stores and retrieves on the principle first in first out', function(done) {
+  it('stores and retrieves on the principle last in first out', function(done) {
 
     var catalogue = new Catalogue();
     var inputs = [ { 'example' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
-                   { 'example' : [200, { "Content-Type": "text/html" }, { "foo": "bar" }] },
+                   { 'example' : [200, { "Content-Type": "text/html" }, { "foo": "baz" }] },
                    { 'example' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
 
     inputs.forEach(function(input) {
@@ -40,16 +40,9 @@ describe('Catalogue', function() {
 
     })
 
-    inputs.forEach(function(input, index) {
-
-      var keys = Object.keys(input);
-
-      keys.forEach(function(key) {
-        var record = input[key];
-        expect(catalogue.retrieve(key)).to.be.deep.equal(inputs[index][key]);
-      })
-
-    })
+    expect(catalogue.retrieve("example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c'] ]);
+    expect(catalogue.retrieve("example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "baz" } ]);
+    expect(catalogue.retrieve("example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
 
     done();     
 
@@ -59,8 +52,9 @@ describe('Catalogue', function() {
 
     var catalogue = new Catalogue();
     var inputs = [ { 'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, { "foo": "bar" }] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+                   { 'example2' : [200, { "Content-Type": "text/html" }, { "foo": "1" }] },
+                   { 'example2' : [200, { "Content-Type": "text/html" }, { "bar": "2" }] },
+                   { 'example2' : [200, { "Content-Type": "text/html" }, { "baz": "3" }] } ]
 
     inputs.forEach(function(input) {
       var keys = Object.keys(input);
@@ -75,10 +69,11 @@ describe('Catalogue', function() {
     expect(catalogue.retrieve("example1")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
     expect(catalogue.retrieve("example1")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
 
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "bar" }]);
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c']]);
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c']]);
 
+    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "baz": "3" }]);
+    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "bar": "2" }]);
+    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "1" }]);
+    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "1" }]);
 
     done();     
 
@@ -104,7 +99,7 @@ describe('Catalogue', function() {
 
     })
 
-    expect(catalogue.retrieve('example')).to.be.deep.equal(inputs[0]['example']);
+    expect(catalogue.retrieve('example')).to.be.deep.equal(inputs[2]['example']);
 
     catalogue.empty();
 
@@ -132,13 +127,13 @@ describe('Catalogue', function() {
 
     }) 
 
-    expect(catalogue.retrieve('example1')).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
-    expect(catalogue.retrieve('example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "x": "y" }]);
+    expect(catalogue.retrieve('example1')).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "baz": "cat" }']);
+    expect(catalogue.retrieve('example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c']]);
 
     catalogue.delete('example1');
 
     expect(catalogue.retrieve('example1')).to.be.equal(null);
-    expect(catalogue.retrieve('example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c']]);
+    expect(catalogue.retrieve('example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "x": "y" }]);
 
     done();     
 

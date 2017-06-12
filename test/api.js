@@ -105,7 +105,7 @@ describe('creating', function() {
 
   }); 
 
-  describe('replaces previous stubs', function() {
+  describe('adds successive stubs', function() {
     
     it('receives a 201 Created for the first stub', function(done) {
       request.put('/example')
@@ -114,25 +114,32 @@ describe('creating', function() {
         .expect(201, done);
     });
 
-    it('creates the first stub', function(done) {
+    it('creates a second stub', function(done) {
+      request.put('/example')
+        .set('Accept', 'application/json')
+        .send([200, { "Content-Type": "application/json" }, "{ \"baz\": 3 }"])
+        .expect(201, done);
+    });
+
+    it('has a policy of last in first out', function(done) {
+      request.get('/example')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200, { "baz": "3" }, done);
+    });
+
+    it('retrieves the least recent stub last', function(done) {
       request.get('/example')
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200, { "bar": "2" }, done);
     });
 
-    it('receives a 201 Created for the replacement stub', function(done) {
-      request.put('/example')
-        .set('Accept', 'application/json')
-        .send([200, { "Content-Type": "application/json" }, "{ \"baz\": 3 }"])
-        .expect(201, done);  
-    });
-
-    it('creates the replacement stub', function(done) {
+    it('retrieves the last stub repeastedly', function(done) {
       request.get('/example')
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
-        .expect(200, { "baz": "3" }, done);
+        .expect(200, { "bar": "2" }, done);
     });
 
   });
