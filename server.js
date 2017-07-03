@@ -1,5 +1,4 @@
 const http  = require('http');
-const Routes = require('./lib/Routes.js')
 const Catalogue = require('./lib/Catalogue.js')
 const PrepareResponse = require('./lib/PrepareResponse.js');
 
