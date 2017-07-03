@@ -1,10 +1,13 @@
 const http  = require('http');
+const Routes = require('./lib/Routes.js')
 const Catalogue = require('./lib/Catalogue.js')
 const PrepareResponse = require('./lib/PrepareResponse.js');
 
 const server = http.createServer(handleRequest);
 
 var stubsCatalogue = new Catalogue();
+
+var requestLog = [];
 
 var defaultResponse = [ 404, { 'Content-Type': 'text/plain' }, '' ]
 
@@ -26,6 +29,11 @@ function handleRequest(request, response) {
           response.writeHead(200);
           response.end();
           break;
+        case /^\/log\/?$/.test(request.url):
+          response.writeHead(200);
+          response.write(JSON.stringify(requestLog));
+          response.end();
+          break;          
         case /^\/favicon\.ico$/.test(request.url):
           response.writeHead(200, { 'Content-Type': 'image/x-icon' });
           response.end();
@@ -47,6 +55,7 @@ function handleRequest(request, response) {
             response.end();
           })
           .catch(function(err) {
+            requestLog.push(path);
             response.writeHead(404, { }, err.message );
             response.end();
           })
