@@ -1,6 +1,6 @@
 const supertest = require('supertest');
 const PORT = (process.env.PORT || 8080);
-const server = require('../server.js')
+const server = require('../lib/server.js')
 
 server.listen(PORT, function(){});
 request = supertest(server);

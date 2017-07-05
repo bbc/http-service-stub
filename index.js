@@ -1,4 +1,4 @@
-var server = require("./server")
+var server = require("./lib/server")
 
 const PORT = (process.env.PORT || 8080);
 
