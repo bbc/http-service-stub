@@ -6,17 +6,32 @@ describe('Catalogue', function() {
   it('stores and retrieves different records', function(done) {
 
     var catalogue = new Catalogue();
-    var inputs = { 'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'], 
-                   'example2' : [200, { "Content-Type": "text/html" }, { "foo": "bar" }],
-                   'example3' : [200, { "Content-Type": "text/html" }, ['a','b','c']]
-                 }
 
-    var keys = Object.keys(inputs);
+    var examples = { 
+      'foo' :
+        { 
+          'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'], 
+          'example2' : [200, { "Content-Type": "text/html" }, { "foo": "bar" }],
+          'example3' : [200, { "Content-Type": "text/html" }, ['a','b','c']]
+        },
+      'bar' : 
+        { 
+          'example4' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'], 
+          'example5' : [200, { "Content-Type": "text/html" }, { "kat": "kit" }],
+          'example6' : [200, { "Content-Type": "text/html" }, ['1','2','3']]
+        }
+      }
 
-    keys.forEach(function(key) {
-      var record = inputs[key];
-      catalogue.add(key, record);
-      expect(catalogue.retrieve(key)).to.deep.equal(record);
+    var classifications = Object.keys(examples);
+
+    classifications.forEach(function(classification) {
+      var records = examples[classification];
+      var keys = Object.keys(records);
+      keys.forEach(function(key) {
+        var record = records[key];
+        catalogue.add(classification, key, record);
+        expect(catalogue.retrieve(classification, key)).to.deep.equal(record);
+      })
     })  
 
     done();     
@@ -26,23 +41,30 @@ describe('Catalogue', function() {
   it('stores and retrieves on the principle last in first out', function(done) {
 
     var catalogue = new Catalogue();
-    var inputs = [ { 'example' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
-                   { 'example' : [200, { "Content-Type": "text/html" }, { "foo": "baz" }] },
-                   { 'example' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+    var examples = 
+      { 'foo':
+        [ { 'example' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
+          { 'example' : [200, { "Content-Type": "text/html" }, { "foo": "baz" }] },
+          { 'example' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+      }
 
-    inputs.forEach(function(input) {
-      var keys = Object.keys(input);
+    var keys = Object.keys(examples);
 
-      keys.forEach(function(key) {
-        var record = input[key];
-        catalogue.add(key, record);
+    keys.forEach(function(classification) {
+      var entries = examples[classification];
+
+      entries.forEach(function(entry) {
+        var keys = Object.keys(entry);
+        keys.forEach(function(key) {
+          var record = entry[key];
+          catalogue.add(classification, key, record);
+        })
       })
-
     })
 
-    expect(catalogue.retrieve("example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c'] ]);
-    expect(catalogue.retrieve("example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "baz" } ]);
-    expect(catalogue.retrieve("example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
+    expect(catalogue.retrieve("foo", "example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c'] ]);
+    expect(catalogue.retrieve("foo", "example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "baz" } ]);
+    expect(catalogue.retrieve("foo", "example")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
 
     done();     
 
@@ -51,29 +73,41 @@ describe('Catalogue', function() {
    it('retains the last entry for any subsequent retrivals', function(done) {
 
     var catalogue = new Catalogue();
-    var inputs = [ { 'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, { "foo": "1" }] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, { "bar": "2" }] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, { "baz": "3" }] } ]
+    var examples = {  
+      "foo" : [ { 'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
+                { 'example2' : [200, { "Content-Type": "text/html" }, { "foo": "1" }] },
+                { 'example2' : [200, { "Content-Type": "text/html" }, { "bar": "2" }] },
+                { 'example2' : [200, { "Content-Type": "text/html" }, { "baz": "3" }] } ]
+    }
 
-    inputs.forEach(function(input) {
-      var keys = Object.keys(input);
 
-      keys.forEach(function(key) {
-        var record = input[key];
-        catalogue.add(key, record);
+    var classifications = Object.keys(examples);
+
+    classifications.forEach(function(classification) {
+      var entries = examples[classification];
+
+      entries.forEach(function(input) {
+        var keys = Object.keys(input);
+
+        keys.forEach(function(key) {
+          var record = input[key];
+          catalogue.add(classification, key, record);
+        })
+
       })
 
     })
 
-    expect(catalogue.retrieve("example1")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
-    expect(catalogue.retrieve("example1")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
 
 
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "baz": "3" }]);
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "bar": "2" }]);
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "1" }]);
-    expect(catalogue.retrieve("example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "1" }]);
+    expect(catalogue.retrieve("foo", "example1")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
+    expect(catalogue.retrieve("foo", "example1")).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "foo": "bar" }']);
+
+
+    expect(catalogue.retrieve("foo", "example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "baz": "3" }]);
+    expect(catalogue.retrieve("foo", "example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "bar": "2" }]);
+    expect(catalogue.retrieve("foo", "example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "1" }]);
+    expect(catalogue.retrieve("foo", "example2")).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "foo": "1" }]);
 
     done();     
 
@@ -83,27 +117,35 @@ describe('Catalogue', function() {
 
     var catalogue = new Catalogue();
 
-    expect(catalogue.retrieve('example')).to.be.equal(null);
+    expect(catalogue.retrieve('foo', 'example')).to.be.deep.equal([]);
 
-    var inputs = [ { 'example' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
-                   { 'example' : [200, { "Content-Type": "text/html" }, { "foo": "bar" }] },
-                   { 'example' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+    var examples = { 'foo' :
+      [ { 'example' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
+        { 'example' : [200, { "Content-Type": "text/html" }, { "foo": "bar" }] },
+        { 'example' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+    }
 
-    inputs.forEach(function(input) {
-      var keys = Object.keys(input);
+    var classifications = Object.keys(examples);
 
-      keys.forEach(function(key) {
-        var record = input[key];
-        catalogue.add(key, record);
+    classifications.forEach(function(classification) {
+      var entries = examples[classification];
+
+      entries.forEach(function(input) {
+        var keys = Object.keys(input);
+
+        keys.forEach(function(key) {
+          var record = input[key];
+          catalogue.add(classification, key, record);
+        })
+
       })
-
     })
 
-    expect(catalogue.retrieve('example')).to.be.deep.equal(inputs[2]['example']);
+    expect(catalogue.retrieve('foo', 'example')).to.be.deep.equal(examples['foo'][2]['example']);
 
-    catalogue.empty();
+    catalogue.empty('foo');
 
-    expect(catalogue.retrieve('example')).to.be.equal(null);
+    expect(catalogue.retrieve('foo', 'example')).to.be.equal(null);
 
     done();     
 
@@ -112,28 +154,35 @@ describe('Catalogue', function() {
   it('can be delete an entry', function(done) {
 
     var catalogue = new Catalogue();
-    var inputs = [ { 'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
-                   { 'example1' : [200, { "Content-Type": "text/html" }, '{ "baz": "cat" }'] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, { "x": "y" }] },
-                   { 'example2' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+    var examples = { 'foo' : 
+      [ { 'example1' : [200, { "Content-Type": "text/html" }, '{ "foo": "bar" }'] },
+        { 'example1' : [200, { "Content-Type": "text/html" }, '{ "baz": "cat" }'] },
+        { 'example2' : [200, { "Content-Type": "text/html" }, { "x": "y" }] },
+        { 'example2' : [200, { "Content-Type": "text/html" }, ['a','b','c']] } ]
+    }
 
-    inputs.forEach(function(input) {
-      var keys = Object.keys(input);
+    var classifications = Object.keys(examples);
+    
+    classifications.forEach(function(classification) {
+      var entries = examples[classification];
+      entries.forEach(function(input) {
+        var keys = Object.keys(input);
 
-      keys.forEach(function(key) {
-        var record = input[key];
-        catalogue.add(key, record);
-      })
+        keys.forEach(function(key) {
+          var record = input[key];
+          catalogue.add(classification, key, record);
+        })
 
-    }) 
+      }) 
+    })
 
-    expect(catalogue.retrieve('example1')).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "baz": "cat" }']);
-    expect(catalogue.retrieve('example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c']]);
+    expect(catalogue.retrieve('foo', 'example1')).to.be.deep.equal([200, { "Content-Type": "text/html" }, '{ "baz": "cat" }']);
+    expect(catalogue.retrieve('foo', 'example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, ['a','b','c']]);
 
-    catalogue.delete('example1');
+    catalogue.delete('foo', 'example1');
 
-    expect(catalogue.retrieve('example1')).to.be.equal(null);
-    expect(catalogue.retrieve('example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "x": "y" }]);
+    expect(catalogue.retrieve('foo', 'example1')).to.be.equal(null);
+    expect(catalogue.retrieve('foo', 'example2')).to.be.deep.equal([200, { "Content-Type": "text/html" }, { "x": "y" }]);
 
     done();     
 
