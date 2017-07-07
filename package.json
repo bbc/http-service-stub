@@ -1,6 +1,6 @@
 {
   "name": "http-service-stub",
-  "version": "1.4.3",
+  "version": "1.5.0",
   "description": "Stub GET requests for HTTP endpoints",
   "keywords": ["http", "stub", "server", "test", "testing"],
   "author": "Anthony Green",
