@@ -1,12 +1,18 @@
 {
   "name": "http-service-stub",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Stub GET requests for HTTP endpoints",
-  "keywords": ["http", "stub", "server", "test", "testing"],
+  "keywords": [
+    "http",
+    "stub",
+    "server",
+    "test",
+    "testing"
+  ],
   "author": "Anthony Green",
-  "repository" : {
-    "type" : "git",
-    "url"  : "https://github.com/bbc/http-service-stub"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bbc/http-service-stub"
   },
   "license": "MIT",
   "main": "index.js",
@@ -25,7 +31,7 @@
   },
   "devDependencies": {
     "mocha": "^2.5.3",
-    "chai": "^4.0.0",    
+    "chai": "^4.0.0",
     "supertest": "^1.2.0",
     "speculate": "^1.5.0"
   },
