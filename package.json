@@ -1,6 +1,6 @@
 {
   "name": "http-service-stub",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Stub GET requests for HTTP endpoints",
   "keywords": [
     "http",
