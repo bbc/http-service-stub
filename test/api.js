@@ -10,7 +10,6 @@ describe('/', function() {
   it('defaults to 200', function(done) {
     request.get('/')
       .set('Accept', 'application/json')
-      .expect('Content-Type', /json/)
       .expect(200, {}, done);
   });
 
