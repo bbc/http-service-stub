@@ -27,13 +27,13 @@
     "node": ">= 4.4.7"
   },
   "dependencies": {
-    "newrelic": "1.27.1"
+    "newrelic": "^4.11.0"
   },
   "devDependencies": {
-    "mocha": "^2.5.3",
     "chai": "^4.0.0",
-    "supertest": "^1.2.0",
-    "speculate": "^1.5.0"
+    "mocha": "^5.2.0",
+    "speculate": "^1.7.4",
+    "supertest": "^3.3.0"
   },
   "spec": {
     "post": [
